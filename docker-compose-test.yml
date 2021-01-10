@@ -1,0 +1,52 @@
+version: "3"
+
+services:
+
+  #MySQL for test
+  test_db:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: db
+      MYSQL_ROOT_PASSWORD: 600602
+      SERVICE_TAGS: test
+      SERVICE_NAME: mysql
+    volumes:
+      - testdbdata:/var/lib/mysql/
+      - ./docker/mysql/my.cnf:/etc/mysql/my.
+    networks:
+      - test-network
+
+  test_redis:
+    image: redis
+    command: redis-server --requirepass 600602
+    networks:
+      - test-network
+
+  # test app
+  test:
+    build:
+      context: .
+    volumes:
+      - ./app:/app
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost/api/graphql"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+    environment:
+      DB_HOST: test_db
+      APP_ENV: test
+    depends_on:
+      - test_db
+      - test_redis
+    networks:
+      - test-network
+
+#Docker Networks
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  testdbdata:
+    driver: local

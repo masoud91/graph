@@ -1,0 +1,70 @@
+version: "3"
+
+services:
+
+  #MySQL Service
+  db:
+    image: mysql:5.7
+#    restart: unless-stopped
+    tty: true
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: db
+      MYSQL_ROOT_PASSWORD: 600602
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-network
+
+  redis:
+    image: redis
+    command: redis-server --requirepass 600602
+    networks:
+      - app-network
+
+
+  # Symfony application
+  app:
+    build:
+      context: .
+    volumes:
+      - ./app:/app
+    command: >
+      sh -c " sh bin/wait_for_db.sh
+              bin/console doctrine:migrations:migrate -n
+              php-fpm"
+    environment:
+      DB_HOST: db
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # nginx server
+  webserver:
+    image: nginx
+#    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./app:/app
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local

@@ -1,0 +1,41 @@
+default:
+  suites:
+    default:
+      contexts:
+        - GraphQLContext:
+            fixtures: '@App\DataFixtures\AppFixtures'
+            em: '@doctrine.orm.default_entity_manager'
+            redis: '@snc_redis.default'
+        - Behat\MinkExtension\Context\MinkContext
+        - behatch:context:json
+
+  extensions:
+    Behat\Symfony2Extension:
+      kernel:
+        bootstrap: features/bootstrap/bootstrap.php
+        class: App\Kernel
+        env: 'test'
+
+    Behatch\Extension: ~
+
+    Behat\MinkExtension:
+      base_url: 'http://localhost'
+      files_path: 'features/fixtures/files'
+      sessions:
+        default:
+          symfony2: ~
+
+#    LeanPHP\Behat\CodeCoverage\Extension:
+#      drivers:
+#        - local
+#      filter:
+#        forceCoversAnnotation: true
+#        mapTestClassNameToCoveredClassName: true
+#        whitelist:
+#          include:
+#            directories:
+#              'src': ~
+#      report:
+#        format: html
+#        options:
+#          target: build/behat-coverage
